@@ -52,6 +52,7 @@ inline namespace Option
     {
         // static integer here due to option is more dynamic than level or socket type
         static constexpr int EnableReuseAddress {SO_REUSEADDR};
+        static constexpr int EnableReusePort {SO_REUSEPORT};
         static constexpr int EnableKeepAlive {SO_KEEPALIVE};
         static constexpr int SendBufferSize {SO_SNDBUF};
         static constexpr int ReceiveBufferSize {SO_RCVBUF};

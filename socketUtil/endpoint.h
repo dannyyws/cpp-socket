@@ -38,18 +38,34 @@ struct SocketEndpoint
     [[nodiscard]]
     int configure(int parameter, int value);
     
-    [[nodiscard]]
-    int bindPort(const IPV4_ADDRESS& ipAddress, IPVX_PORT port);
-
-    [[nodiscard]]
-    int bindPort(const IPV6_ADDRESS& ipAddress, IPVX_PORT port){ throw NotImplementedException{"Bind IPV6 Port."};}
-
-    const BytesBuffer& receive(){
+    const BytesBuffer& receive()
+    {
         return socketPtr->receive();
     }
+    
+    /// @brief Receive buffer from connected socket with clientId fs. 
+    /// @param clientId 
+    /// @return Number of bytes read. Or error if connected socket is closed(normally).
+    const BytesBuffer& receive(const int clientId)
+    {
+        return socketPtr->receive(clientId);
+    }
 
-    const BytesBuffer& receive(socket_address_ptr clientAddressPtr, address_size_ptr addressSizePtr){
+    const BytesBuffer& receive(socket_address_ptr clientAddressPtr, address_size_ptr addressSizePtr)
+    {
         return socketPtr->receive(clientAddressPtr, addressSizePtr);
+    }
+
+    [[nodiscard]]
+    int send(const BytesBuffer& message)
+    {
+        return socketPtr->send(message);
+    }
+
+    [[nodiscard]]
+    int send(const BytesBuffer& message, const socket_address_ptr client, const address_size& size)
+    {
+        return socketPtr->send(message, client, size);
     }
 
 protected:
@@ -88,6 +104,16 @@ protected:
             int status = bind(m_self, reinterpret_cast<sockaddr*>(&m_address), sizeof(m_address));
             return status;
         }
+
+        [[nodiscard]]
+        int connect(const IPV4_ADDRESS &ipAddress, IPVX_PORT port)
+        {
+            m_address.sin_port  = htons(port),
+            m_address.sin_addr.s_addr = static_cast<uint32_t>(ipAddress);
+
+            int status = ::connect(m_self, reinterpret_cast<sockaddr*>(&m_address), sizeof(m_address));
+            return status;
+        }
         
         [[nodiscard]]
         int listen(int maxConnection)
@@ -110,10 +136,28 @@ protected:
         [[nodiscard]]
         const BytesBuffer& receive()
         {
-            socket_address clientAddress{};
-            address_size addressSize {sizeof(socket_address)};
+            static_assert(std::is_same<TRANSPORT, Transport::UDP>::value, "UDP support connectionless");
+            int response = ::read(m_self,
+                                  m_bufferPtr->message(),
+                                  m_bufferPtr->size());
+            if (response <= 0)
+            {
+                m_bufferPtr->reset();
+            }
+            return *m_bufferPtr;
+        }
 
-            return receive(&clientAddress, &addressSize);
+        [[nodiscard]]
+        const BytesBuffer& receive(const int clientId)
+        {
+            int response = ::read(clientId,
+                                  m_bufferPtr->message(),
+                                  m_bufferPtr->size());
+            if (response <= 0)
+            {
+                m_bufferPtr->reset();
+            }
+            return *m_bufferPtr;
         }
 
         [[nodiscard]]
@@ -125,11 +169,24 @@ protected:
                                       0,
                                       reinterpret_cast<sockaddr *>(clientAddress),
                                       addressSize);
-            if (response != 0)
+            if (response <= 0)
             {
                 m_bufferPtr->reset();
             }
             return *m_bufferPtr;
+        }
+
+        [[nodiscard]]
+        int send(const BytesBuffer& message)
+        {
+            return ::send(m_self, reinterpret_cast<const void*>(message.message()), strlen(message.message()), 0);
+        }
+
+        [[nodiscard]]
+        int send(const BytesBuffer& message, const socket_address_ptr client, const address_size& size)
+        {
+            return ::sendto(m_self, reinterpret_cast<const void *>(message.message()), strlen(message.message()), 0,
+                            reinterpret_cast<const sockaddr *>(client), size);
         }
 
     private:
@@ -171,35 +228,3 @@ int SocketEndpoint<ENDPOINT, DOMAIN, TRANSPORT, PROTOCOL>::configure(int paramet
 {
     return socketPtr->template configure<OPTION_LEVEL>(parameter, value);
 }
-
-template<template <typename...> class ENDPOINT, 
-         typename DOMAIN, 
-         typename TRANSPORT, 
-         typename PROTOCOL>
-int SocketEndpoint<ENDPOINT, DOMAIN, TRANSPORT, PROTOCOL>::bindPort(const IPV4_ADDRESS& ipAddress, IPVX_PORT port)
-{
-    return socketPtr->binds(ipAddress, port);
-}
-
-template<typename... TRANSPORT>
-struct Client: SocketEndpoint<Client, TRANSPORT...>
-{
-    using SocketEndpoint<Client, TRANSPORT...>::socketPtr;
-};
-
-template<typename... TRANSPORT>
-struct Server: SocketEndpoint<Server, TRANSPORT...> 
-{
-    using SocketEndpoint<Server, TRANSPORT...>::socketPtr;
-    
-    [[nodiscard]]
-    int startListen(int maxConnection=SOMAXCONN)
-    {
-        return socketPtr->listen(maxConnection);
-    }
-    
-    int acceptClient()
-    {
-        return socketPtr->accept();
-    }
-};

@@ -10,7 +10,8 @@ public:
     BytesBuffer& operator=(BytesBuffer& rhs) = delete;
     BytesBuffer& operator=(BytesBuffer&& rhs) = delete;
 
-    BytesBuffer(int byteSize) {
+    BytesBuffer(int byteSize) :m_size{byteSize}
+    {
         ptr = new char[byteSize];
         memset(ptr, 0, byteSize * sizeof(char));
     }
@@ -20,12 +21,20 @@ public:
         ptr = nullptr;
     }
 
-    const char* message() {
+    char* message() {
         return ptr;
     }
 
-    const size_t size() {
-        return strlen(ptr);
+    const char* message() const {
+        return ptr;
+    }
+
+    int size() {
+        return m_size;
+    }
+
+    const int& size() const {
+        return m_size;
     }
 
     void reset() {
@@ -34,4 +43,5 @@ public:
 
 private:
     char* ptr{};
+    int m_size{};
 };

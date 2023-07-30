@@ -3,12 +3,13 @@
 // - Wrong substition of domain, transport or protocol will failed in compilation because they are essentially a variant of their own
 // - All substitution is compile-level work which incur zero-runtime cost
 
-#include <socketUtil/endpoint.h>
+#include <socketUtil/server.h>
 
 void testTCPIPServer()
 {
     using Server = Server<Domain::IPV4, Transport::TCP, Protocol::IP>;
     Server server{1024};
+    int socket = -1;
     if (server.configure<Option::SocketOption>(Option::SocketOption::EnableReuseAddress, 1)) {
         printf("Detected: cannot configure socket properly\n");
     }
@@ -18,11 +19,19 @@ void testTCPIPServer()
     if (server.startListen(3) != 0) {
         printf("Detected: cannot listen to port\n");
     }
-    if (server.acceptClient() == -1) {
+    socket = server.acceptClient();
+    if (socket < 0) {
         printf("Detected: fail to accept incoming connection\n");
     }
-    while(true) {
-        sleep(1);
+    // unfortunately for TCP connection protocol, we may need to scan all connected socket
+    while(true)
+    {
+        // continuously receive hello for testing
+        const BytesBuffer& buffer = server.receive(socket);
+        if (strlen(buffer.message()) > 0)
+        {
+            printf("Received [%d]Bytes: %s\n", (int)strlen(buffer.message()), buffer.message());
+        }
     }
 }
 
@@ -36,15 +45,17 @@ void testUDPServer()
     if (server.bindPort(IPV4_ADDRESS{127,0,0,1}, 8080) != 0) {
         printf("Detected: cannot bind to port\n");
     }
-    while(true) {
-        sleep(1);
+    while(true)
+    {
+        const BytesBuffer& buffer = server.receive();
+        printf("Received [%d]Bytes: %s\n", (int)strlen(buffer.message()), buffer.message());
     }
 }
 
 int main(int argc, char const *argv[])
 {
-    // testTCPIPServer();
-    testUDPServer();
+    testTCPIPServer();
+    // testUDPServer();
 
     return 0;
 }
