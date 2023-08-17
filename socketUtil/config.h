@@ -61,13 +61,13 @@ inline namespace Option
         static constexpr int EnableOutOfBandQueue {SO_OOBINLINE};
     };
 
-    struct TcpOption: OptionLevel<SocketOption>, std::integral_constant<int, IPPROTO_TCP> 
+    struct TcpOption: OptionLevel<TcpOption>, std::integral_constant<int, IPPROTO_TCP> 
     {
         static constexpr int NoDelay {TCP_NODELAY};
         // <-- not advisable to configure in portable code -->
     };
 
-    struct IpOption: OptionLevel<SocketOption>, std::integral_constant<int, IPPROTO_IP> 
+    struct IpOption: OptionLevel<IpOption>, std::integral_constant<int, IPPROTO_IP> 
     {
         enum TypeOfService
         {
@@ -81,7 +81,7 @@ inline namespace Option
         static constexpr int MulticastTimeToLive {IP_MULTICAST_TTL};
     };
 
-    struct UdpOption: OptionLevel<SocketOption>, std::integral_constant<int, IPPROTO_UDP>
+    struct UdpOption: OptionLevel<UdpOption>, std::integral_constant<int, IPPROTO_UDP>
     {
         static constexpr int EnableCork {UDP_CORK};
     };
