@@ -15,7 +15,7 @@ Also, configuring socket is not as clueless as C inet library as seen below.
 ```cpp
 server.configure<Option::SocketOption>(Option::SocketOption::EnableReuseAddress, 1)
 ```
-> DO not however, the configuration is not made type safe. I am still sceptical of making trade-off for required flexibility.
+> DO note that configuration is not made type safe (yet). I am still sceptical of making trade-off for required flexibility.
 
 The samples in `sample` directory contains c++ main code to provide basic usage of the library.
 
