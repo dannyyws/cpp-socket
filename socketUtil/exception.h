@@ -1,3 +1,6 @@
+#ifndef EXCEPTION_H
+#define EXCEPTION_H
+
 #include <exception>
 #include <cstring>
 
@@ -30,3 +33,5 @@ private:
 };
 
 const char* NotImplementedException::MESSAGE {"Feature is not implemented exception:\n\t\0"};
+
+#endif

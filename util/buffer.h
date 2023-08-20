@@ -1,3 +1,6 @@
+#ifndef BYTES_BUFFER
+#define BYTES_BUFFER
+
 #include <algorithm>
 #include <memory.h>
 
@@ -45,3 +48,4 @@ private:
     char* ptr{};
     int m_size{};
 };
+#endif

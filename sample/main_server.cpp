@@ -50,26 +50,31 @@ void testUDPServer()
     if (server.configure<Option::UdpOption>(Option::UdpOption::EnableCork, 1)) {
         printf("Detected: cannot configure socket properly\n");
     }
-    if (server.bindPort(IPV4_ADDRESS{127,0,0,1}, 8080) != 0) {
+    int serverId = server.bindPort(IPV4_ADDRESS{127,0,0,1}, 8080);
+    if (serverId != 0) {
         printf("Detected: cannot bind to port\n");
     }
+    int retryCount = 2;
     while(true)
     {
         const BytesBuffer& buffer = server.receive();
         if (strlen(buffer.message()) > 0)
+        {
             printf("Received [%d]Bytes: %s\n", (int)strlen(buffer.message()), buffer.message());
+        }
         else
         {
-            printf("Socket [%d] is disconnected.\n", socket);
-            break;
+            printf("Socket [%d] is disconnected.\n", serverId);
+            if (retryCount-- == 0)
+                break;
         }
     }
 }
 
 int main(int argc, char const *argv[])
 {
-    // testTCPIPServer();
-    testUDPServer();
+    testTCPIPServer();
+    // testUDPServer();
 
     return 0;
 }

@@ -36,7 +36,7 @@ void testUDPClient()
     }
     BytesBuffer bytesBuffer(1024);
     strcpy(bytesBuffer.message(), "Hello from client\0");
-    // client.send(bytesBuffer);
+    
     if (client.send(bytesBuffer) == -1)
     {
         printf("Failed to send message across network.");
@@ -46,8 +46,8 @@ void testUDPClient()
 
 int main(int argc, char const *argv[])
 {
-    // testTCPIPClient();
-    testUDPClient();
+    testTCPIPClient();
+    // testUDPClient();
 
     return 0;
 }
